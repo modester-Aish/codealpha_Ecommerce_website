@@ -35,68 +35,81 @@ const AdminDashboard = () => {
   } = isAuthenticated();
 
   return (
-    <Layout title='Admin Dashboard' description={`Welcome, ${name}`}>
-      <Grid container spacing={2}>
-        {/* Sidebar */}
-        <AdminSidebar />
+    <Layout>
+      <Box sx={{ mt: 12, mb: 6 }}>
+        <Grid container spacing={3}>
+          {/* Sidebar */}
+          <AdminSidebar />
 
-        {/* MAIN CONTENT */}
-        <Grid size={{ xs: 12, md: 9 }}>
-          <Card elevation={3}>
-            <CardHeader
-              title='Admin Profile'
-              sx={{
-                bgcolor: 'background.paper',
-              }}
-            />
-            <Divider />
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <Avatar
-                  sx={{
-                    width: 64,
-                    height: 64,
-                    mr: 3,
-                    bgcolor: 'primary.main',
-                    fontSize: '2rem',
-                  }}
-                >
-                  {name.charAt(0).toUpperCase()}
-                </Avatar>
-                <Box>
-                  <Typography variant='h5' component='div'>
-                    {name}
-                  </Typography>
-                  <Chip
-                    label={role === 1 ? 'Administrator' : 'Registered User'}
-                    color='primary'
-                    size='small'
-                    sx={{ mt: 1 }}
-                  />
+          {/* MAIN CONTENT */}
+          <Grid size={{ xs: 12, md: 9 }}>
+            <Card elevation={3} sx={{ minHeight: 500 }}>
+              <CardHeader
+                title='Admin Profile'
+                sx={{
+                  bgcolor: 'background.paper',
+                  py: 3,
+                }}
+              />
+              <Divider />
+              <CardContent sx={{ py: 4 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+                  <Avatar
+                    sx={{
+                      width: 80,
+                      height: 80,
+                      mr: 4,
+                      bgcolor: 'primary.main',
+                      fontSize: '2.5rem',
+                    }}
+                  >
+                    {name.charAt(0).toUpperCase()}
+                  </Avatar>
+                  <Box>
+                    <Typography variant='h4' component='div' sx={{ mb: 1 }}>
+                      {name}
+                    </Typography>
+                    <Chip
+                      label={role === 1 ? 'Administrator' : 'Registered User'}
+                      color='primary'
+                      size='medium'
+                      sx={{ fontSize: '0.9rem', py: 2 }}
+                    />
+                  </Box>
                 </Box>
-              </Box>
 
-              <Paper elevation={0} sx={{ bgcolor: 'background.default' }}>
-                <List dense>
-                  <ListItem>
-                    <ListItemIcon sx={{ minWidth: 40 }}>
-                      <PersonIcon color='primary' />
-                    </ListItemIcon>
-                    <ListItemText primary='User ID' secondary={_id} />
-                  </ListItem>
-                  <Divider component='li' />
-                  <ListItem>
-                    <ListItemIcon sx={{ minWidth: 40 }}>
-                      <EmailIcon color='primary' />
-                    </ListItemIcon>
-                    <ListItemText primary='Email' secondary={email} />
-                  </ListItem>
-                </List>
-              </Paper>
-            </CardContent>
-          </Card>
+                <Paper elevation={0} sx={{ bgcolor: 'background.default', p: 3 }}>
+                  <List>
+                    <ListItem sx={{ py: 2 }}>
+                      <ListItemIcon sx={{ minWidth: 50 }}>
+                        <PersonIcon color='primary' sx={{ fontSize: '1.5rem' }} />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary='User ID' 
+                        secondary={_id}
+                        primaryTypographyProps={{ variant: 'h6', fontWeight: 'bold' }}
+                        secondaryTypographyProps={{ variant: 'body1', sx: { mt: 1 } }}
+                      />
+                    </ListItem>
+                    <Divider component='li' sx={{ my: 2 }} />
+                    <ListItem sx={{ py: 2 }}>
+                      <ListItemIcon sx={{ minWidth: 50 }}>
+                        <EmailIcon color='primary' sx={{ fontSize: '1.5rem' }} />
+                      </ListItemIcon>
+                      <ListItemText 
+                        primary='Email' 
+                        secondary={email}
+                        primaryTypographyProps={{ variant: 'h6', fontWeight: 'bold' }}
+                        secondaryTypographyProps={{ variant: 'body1', sx: { mt: 1 } }}
+                      />
+                    </ListItem>
+                  </List>
+                </Paper>
+              </CardContent>
+            </Card>
+          </Grid>
         </Grid>
-      </Grid>
+      </Box>
     </Layout>
   );
 };

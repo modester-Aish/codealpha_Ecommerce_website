@@ -1,14 +1,17 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
-import { CssBaseline } from '@mui/material';
+import { CssBaseline, ThemeProvider } from '@mui/material';
 import { SnackbarProvider } from './context/SnackbarContext.jsx';
+import theme from './theme.js';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <CssBaseline />
-    <SnackbarProvider>
-      <App />
-    </SnackbarProvider>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <SnackbarProvider>
+        <App />
+      </SnackbarProvider>
+    </ThemeProvider>
   </React.StrictMode>
 );

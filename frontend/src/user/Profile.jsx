@@ -123,8 +123,6 @@ const Profile = () => {
 
   return (
     <Layout
-      title='Profile'
-      description='Update your profile'
       className='container-fluid'
     >
       <Grid container spacing={3}>

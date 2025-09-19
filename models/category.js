@@ -9,6 +9,15 @@ const categorySchema = new mongoose.Schema(
       maxlength: 32,
       unique: true,
     },
+    parent: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Category',
+      default: null,
+    },
+    isSubcategory: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

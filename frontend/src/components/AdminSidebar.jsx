@@ -30,14 +30,18 @@ const adminLinks = [
 const AdminSidebar = () => {
   return (
     <Grid size={{ xs: 12, md: 3 }}>
-      <Card elevation={3}>
+      <Card elevation={3} sx={{ minHeight: 500 }}>
         <CardHeader
           title='Admin Actions'
-          titleTypographyProps={{ variant: 'h6' }}
-          sx={{ bgcolor: 'primary.main', color: 'common.white' }}
+          titleTypographyProps={{ variant: 'h5', fontWeight: 'bold' }}
+          sx={{ 
+            bgcolor: 'primary.main', 
+            color: 'common.white',
+            py: 3,
+          }}
         />
         <Divider />
-        <List dense>
+        <List sx={{ py: 2 }}>
           {adminLinks.map((link, index) => (
             <React.Fragment key={link.text}>
               <ListItem
@@ -45,17 +49,28 @@ const AdminSidebar = () => {
                 component={Link}
                 to={link.to}
                 sx={{
+                  py: 2,
+                  px: 3,
                   '&:hover': {
                     bgcolor: 'action.hover',
+                    transform: 'translateX(4px)',
                   },
+                  transition: 'all 0.2s ease-in-out',
                 }}
               >
-                <ListItemIcon sx={{ color: 'primary.main' }}>
+                <ListItemIcon sx={{ color: 'primary.main', minWidth: 50 }}>
                   {link.icon}
                 </ListItemIcon>
-                <ListItemText primary={link.text} />
+                <ListItemText 
+                  primary={link.text}
+                  primaryTypographyProps={{ 
+                    variant: 'body1', 
+                    fontWeight: 'medium',
+                    fontSize: '1rem'
+                  }}
+                />
               </ListItem>
-              {index < adminLinks.length - 1 && <Divider component='li' />}
+              {index < adminLinks.length - 1 && <Divider component='li' sx={{ mx: 2 }} />}
             </React.Fragment>
           ))}
         </List>

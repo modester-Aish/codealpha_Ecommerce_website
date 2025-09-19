@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Layout from './Layout';
 import Button from '@mui/material/Button';
 import Card from './Card.jsx';
-import { getCategories, getFilteredProducts } from './apiCore.js';
+import { getMainCategories, getFilteredProducts } from './apiCore.js';
 import CategoriesFilter from './CategoriesFilter';
 import PriceRangeFilter from './PriceRangeFilter';
 import { Box, Grid, Typography } from '@mui/material';
@@ -30,7 +30,7 @@ const Shop = () => {
     filters: { category: [], price: [] },
   });
 
-  const [categories, setCategories] = useState([]);
+  const [mainCategories, setMainCategories] = useState([]);
   const [error, setError] = useState(false);
   const [limit, setLimit] = useState(6);
   const [skip, setSkip] = useState(0);
@@ -38,11 +38,11 @@ const Shop = () => {
   const [filteredResults, setFilteredResults] = useState([]);
 
   const init = () => {
-    getCategories().then((data) => {
+    getMainCategories().then((data) => {
       if (data.error) {
         setError(data.error);
       } else {
-        setCategories(data);
+        setMainCategories(data);
       }
     });
   };
@@ -77,7 +77,7 @@ const Shop = () => {
   const loadMoreButton = () => {
     return (
       size > 0 &&
-      size >= limit && (
+      size > skip + limit && (
         <GradientButton onClick={loadMore} variant='contained'>
           Load more
         </GradientButton>
@@ -87,7 +87,7 @@ const Shop = () => {
 
   useEffect(() => {
     init();
-    loadFilteredResults(skip, limit, myFilters.filters);
+    loadFilteredResults(myFilters.filters);
   }, []);
 
   const handleFilters = (filters, filterBy) => {
@@ -99,7 +99,7 @@ const Shop = () => {
       let priceValues = handlePrice(filters);
       newFilters.filters[filterBy] = priceValues;
     }
-    loadFilteredResults(myFilters.filters);
+    loadFilteredResults(newFilters.filters);
     setMyFilters(newFilters);
   };
 
@@ -115,17 +115,22 @@ const Shop = () => {
     return array;
   };
 
+  const hasActiveFilters = () => {
+    return (myFilters.filters.category && myFilters.filters.category.length > 0) || 
+           (myFilters.filters.price && myFilters.filters.price.length > 0);
+  };
+
   return (
     <Layout
-      title='Shop page'
-      description='Search and find books'
       className='container-fluid'
     >
-      <Search />
+      <Box sx={{ mt: 8 }}>
+        <Search />
+      </Box>
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, md: 3 }}>
           <CategoriesFilter
-            categories={categories}
+            categories={mainCategories}
             handleFilters={(filters) => handleFilters(filters, 'category')}
           />
           <PriceRangeFilter
@@ -135,7 +140,7 @@ const Shop = () => {
         </Grid>
         <Grid size={{ xs: 12, md: 9 }}>
           <Typography variant='h4' gutterBottom>
-            Products
+            {hasActiveFilters() ? `Filtered Products (${filteredResults.length})` : 'Products'}
           </Typography>
           <Box
             sx={{

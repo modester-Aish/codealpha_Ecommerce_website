@@ -7,7 +7,9 @@ const {
   read,
   update,
   remove,
-  list
+  list,
+  listMainCategories,
+  listSubcategories
 } = require('../controllers/category');
 const { requireSignin, isAuth, isAdmin } = require('../controllers/auth');
 const { userById } = require('../controllers/user');
@@ -29,6 +31,8 @@ router.delete(
   remove
 );
 router.get('/categories', list);
+router.get('/categories/main', listMainCategories);
+router.get('/categories/subcategories/:parentId', listSubcategories);
 
 router.param('categoryId', categoryById);
 router.param('userId', userById);

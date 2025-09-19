@@ -34,10 +34,7 @@ const UsersList = () => {
   }, []);
 
   return (
-    <Layout
-      title='Users List'
-      description={`Hey ${user.name}, ready to manage users?`}
-    >
+    <Layout>
       <Grid container spacing={2}>
         {/* SIDEBAR */}
         <AdminSidebar />

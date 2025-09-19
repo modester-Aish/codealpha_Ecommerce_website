@@ -32,10 +32,7 @@ const ProductList = () => {
   }, []);
 
   return (
-    <Layout
-      title='Product List'
-      description={`Hey ${user.name}, ready to manage products?`}
-    >
+    <Layout>
       <Grid container spacing={2}>
         {/* Sidebar */}
         <AdminSidebar />

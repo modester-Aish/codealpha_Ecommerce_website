@@ -9,44 +9,36 @@ import {
   Stack,
 } from '@mui/material';
 import {
-  getBraintreeClientToken,
-  processPayment,
   createOrder,
 } from './apiCore';
 import { emptyCart } from './cartHelpers';
 import { isAuthenticated } from '../auth';
 import { Link } from 'react-router-dom';
-import DropIn from 'braintree-web-drop-in-react';
 
 const Checkout = ({ products, setRun = (f) => f, run = undefined }) => {
   const [data, setData] = useState({
     loading: false,
     success: false,
-    clientToken: null,
     error: '',
-    instance: {},
-    address: '',
+    deliveryDetails: {
+      name: '',
+      email: '',
+      phone: '',
+      address: '',
+    },
   });
 
   const userId = isAuthenticated() && isAuthenticated().user._id;
   const token = isAuthenticated() && isAuthenticated().token;
 
-  const getToken = (userId, token) => {
-    getBraintreeClientToken(userId, token).then((res) => {
-      if (res.error) {
-        setData((prev) => ({ ...prev, error: res.error }));
-      } else {
-        setData((prev) => ({ ...prev, clientToken: res.clientToken }));
-      }
+  const handleDeliveryDetails = (field) => (event) => {
+    setData({
+      ...data,
+      deliveryDetails: {
+        ...data.deliveryDetails,
+        [field]: event.target.value,
+      },
     });
-  };
-
-  useEffect(() => {
-    getToken(userId, token);
-  }, []);
-
-  const handleAddress = (event) => {
-    setData({ ...data, address: event.target.value });
   };
 
   const getTotal = () =>
@@ -54,80 +46,106 @@ const Checkout = ({ products, setRun = (f) => f, run = undefined }) => {
       return currentValue + nextValue.count * nextValue.price;
     }, 0);
 
-  const buy = () => {
-    setData({ ...data, loading: true });
-    let nonce;
-    data.instance
-      .requestPaymentMethod()
-      .then((res) => {
-        nonce = res.nonce;
-        const paymentData = {
-          paymentMethodNonce: nonce,
-          amount: getTotal(products),
-        };
+  const placeOrder = () => {
+    setData({ ...data, loading: true, error: '' });
+    
+    const createOrderData = {
+      products: products,
+      transaction_id: `COD_${Date.now()}`, // Generate COD transaction ID
+      amount: getTotal(products),
+      deliveryDetails: data.deliveryDetails,
+      paymentMethod: 'Cash on Delivery',
+    };
 
-        processPayment(userId, token, paymentData)
-          .then((response) => {
-            const createOrderData = {
-              products: products,
-              transaction_id: response.transaction.id,
-              amount: response.transaction.amount,
-              address: data.address,
-            };
-
-            createOrder(userId, token, createOrderData)
-              .then(() => {
-                emptyCart(() => {
-                  setRun(!run);
-                  setData({
-                    loading: false,
-                    success: true,
-                    clientToken: data.clientToken,
-                    instance: {},
-                    address: '',
-                  });
-                });
-              })
-              .catch(() => setData({ ...data, loading: false }));
-          })
-          .catch(() => setData({ ...data, loading: false }));
+    createOrder(userId, token, createOrderData)
+      .then(() => {
+        emptyCart(() => {
+          setRun(!run);
+          setData({
+            loading: false,
+            success: true,
+            error: '',
+            deliveryDetails: {
+              name: '',
+              email: '',
+              phone: '',
+              address: '',
+            },
+          });
+        });
       })
       .catch((error) => {
-        setData({ ...data, error: error.message });
+        setData({ 
+          ...data, 
+          loading: false, 
+          error: 'Failed to place order. Please try again.' 
+        });
       });
   };
 
-  const showDropIn = () =>
-    data.clientToken !== null &&
+  const showOrderForm = () =>
     products.length > 0 && (
       <Box sx={{ mt: 2 }}>
+        <Typography variant='h6' gutterBottom>
+          Delivery Information
+        </Typography>
+        
+        <TextField
+          label='Full Name'
+          placeholder='Enter your full name'
+          fullWidth
+          value={data.deliveryDetails.name}
+          onChange={handleDeliveryDetails('name')}
+          sx={{ mb: 2 }}
+          required
+        />
+
+        <TextField
+          label='Email'
+          placeholder='Enter your email address'
+          fullWidth
+          type='email'
+          value={data.deliveryDetails.email}
+          onChange={handleDeliveryDetails('email')}
+          sx={{ mb: 2 }}
+          required
+        />
+
+        <TextField
+          label='Phone Number'
+          placeholder='Enter your phone number'
+          fullWidth
+          value={data.deliveryDetails.phone}
+          onChange={handleDeliveryDetails('phone')}
+          sx={{ mb: 2 }}
+          required
+        />
+
         <TextField
           label='Delivery Address'
-          placeholder='Type your delivery address...'
+          placeholder='Enter your complete delivery address...'
           fullWidth
           multiline
           minRows={3}
-          value={data.address}
-          onChange={handleAddress}
+          value={data.deliveryDetails.address}
+          onChange={handleDeliveryDetails('address')}
           sx={{ mb: 2 }}
+          required
         />
 
-        <DropIn
-          options={{
-            authorization: data.clientToken,
-            paypal: { flow: 'vault' },
-          }}
-          onInstance={(instance) => (data.instance = instance)}
-        />
+        <Alert severity='info' sx={{ mb: 2 }}>
+          💰 Payment will be collected at the time of delivery
+        </Alert>
 
         <Button
-          onClick={buy}
+          onClick={placeOrder}
           variant='contained'
           color='success'
           fullWidth
           sx={{ mt: 2 }}
+          disabled={!data.deliveryDetails.name || !data.deliveryDetails.email || !data.deliveryDetails.phone || !data.deliveryDetails.address}
         >
-          Pay ${getTotal()}
+          Place Order (Cash on Delivery) - ${getTotal()}
         </Button>
       </Box>
     );
@@ -146,7 +164,7 @@ const Checkout = ({ products, setRun = (f) => f, run = undefined }) => {
 
       {data.success && (
         <Alert severity='success' sx={{ mb: 2 }}>
-          🎉 Thanks! Your payment was successful.
+          🎉 Thanks! Your order has been placed successfully. You will receive a confirmation call soon.
         </Alert>
       )}
 
@@ -157,17 +175,22 @@ const Checkout = ({ products, setRun = (f) => f, run = undefined }) => {
       )}
 
       {isAuthenticated() ? (
-        showDropIn()
+        showOrderForm()
       ) : (
-        <Button
-          component={Link}
-          to='/signin'
-          variant='contained'
-          color='primary'
-          fullWidth
-        >
-          Sign in to checkout
-        </Button>
+        <Box>
+          <Alert severity='info' sx={{ mb: 2 }}>
+            Please sign in to proceed with checkout
+          </Alert>
+          <Button
+            component={Link}
+            to='/signin'
+            variant='contained'
+            color='primary'
+            fullWidth
+          >
+            Sign in to checkout
+          </Button>
+        </Box>
       )}
     </Box>
   );

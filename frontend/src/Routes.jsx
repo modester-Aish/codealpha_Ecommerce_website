@@ -7,6 +7,7 @@ import Dashboard from './user/UserDashboard';
 import AdminRoute from './auth/AdminRoute';
 import AdminDashboard from './user/AdminDashboard';
 import AddCategory from './admin/AddCategory';
+import EditCategory from './admin/EditCategory';
 import AddProduct from './admin/AddProduct';
 import Shop from './core/Shop';
 import Product from './core/Product';
@@ -17,6 +18,9 @@ import ManageProducts from './admin/ManageProducts';
 import UpdateProduct from './admin/UpdateProduct';
 import CategoryList from './admin/CategoryList';
 import UsersList from './admin/UsersList';
+import BannerList from './admin/BannerList';
+import AddBanner from './admin/AddBanner';
+import EditBanner from './admin/EditBanner';
 import NotFound from './core/NotFound';
 
 const AppRoutes = () => {
@@ -66,6 +70,14 @@ const AppRoutes = () => {
           }
         />
         <Route
+          path='/admin/category/edit/:categoryId'
+          element={
+            <AdminRoute>
+              <EditCategory />
+            </AdminRoute>
+          }
+        />
+        <Route
           path='/create/product'
           element={
             <AdminRoute>
@@ -110,6 +122,30 @@ const AppRoutes = () => {
           element={
             <AdminRoute>
               <UsersList />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path='/admin/banners'
+          element={
+            <AdminRoute>
+              <BannerList />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path='/create/banner'
+          element={
+            <AdminRoute>
+              <AddBanner />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path='/admin/banner/edit/:bannerId'
+          element={
+            <AdminRoute>
+              <EditBanner />
             </AdminRoute>
           }
         />

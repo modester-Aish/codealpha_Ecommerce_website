@@ -7,8 +7,6 @@ import Typography from '@mui/material/Typography';
 const NotFound = () => {
   return (
     <Layout
-      title='Error: 404'
-      description='Page Not Found'
       className='container-fluid'
     >
       <Typography variant='h3' gutterBottom>

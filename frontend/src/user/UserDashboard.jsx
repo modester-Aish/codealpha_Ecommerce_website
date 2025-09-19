@@ -169,8 +169,8 @@ const Dashboard = () => {
   );
 
   return (
-    <Layout title='Dashboard' description={`Welcome back, ${name}`}>
-      <Grid container spacing={2}>
+    <Layout>
+      <Grid container spacing={2} sx={{ mt: 3 }}>
         {/* LEFT SIDEBAR */}
         <UserSidebar userId={_id} />
 

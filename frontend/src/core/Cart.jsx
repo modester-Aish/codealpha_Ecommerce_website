@@ -64,12 +64,9 @@ const Cart = () => {
   );
 
   return (
-    <Layout
-      title='Shopping Cart'
-      description='Manage your cart items. Add remove checkout or continue shopping.'
-    >
+    <Layout>
       {items.length > 0 ? (
-        <Grid container spacing={2}>
+        <Grid container spacing={2} sx={{ mt: 3 }}>
           {/* Cart Items */}
           <Grid size={{ xs: 12, md: 3 }}>
             <Paper elevation={2} sx={{ p: 3, height: '100%' }}>
@@ -92,7 +89,7 @@ const Cart = () => {
           </Grid>
         </Grid>
       ) : (
-        <Box sx={{ maxWidth: 600, mx: 'auto' }}>
+        <Box sx={{ maxWidth: 600, mx: 'auto', mt: 3 }}>
           <Paper elevation={2} sx={{ p: 4 }}>
             {noItemsMessage()}
           </Paper>

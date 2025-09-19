@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   Alert,
   Box,
@@ -15,22 +15,65 @@ import {
   Select,
   MenuItem,
   FormHelperText,
+  CircularProgress,
 } from '@mui/material';
 import Layout from '../core/Layout';
 import AdminSidebar from '../components/AdminSidebar';
 import { isAuthenticated } from '../auth';
-import { createCategory, getCategories } from './apiAdmin';
+import { getCategory, updateCategory, getCategories } from './apiAdmin';
 
-const AddCategory = () => {
+const EditCategory = () => {
+  const { categoryId } = useParams();
+  const navigate = useNavigate();
+  
   const [name, setName] = useState('');
   const [parent, setParent] = useState('');
-  const [categoryType, setCategoryType] = useState('main'); // 'main' or 'sub'
+  const [categoryType, setCategoryType] = useState('main');
   const [allCategories, setAllCategories] = useState([]);
-  const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  // destructure user and token from localstorage
   const { user, token } = isAuthenticated();
+
+  // Load category data and all categories
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        
+        // Load the category to edit
+        const categoryData = await getCategory(categoryId);
+        if (categoryData.error) {
+          setError(categoryData.error);
+          return;
+        }
+        
+        // Load all categories for parent selection
+        const allCategoriesData = await getCategories();
+        if (allCategoriesData.error) {
+          setError(allCategoriesData.error);
+          return;
+        }
+        
+        // Filter out the current category from parent options to prevent self-reference
+        const filteredCategories = allCategoriesData.filter(cat => cat._id !== categoryId);
+        setAllCategories(filteredCategories);
+        
+        // Set form data
+        setName(categoryData.name);
+        setCategoryType(categoryData.isSubcategory ? 'sub' : 'main');
+        setParent(categoryData.parent ? categoryData.parent._id : '');
+        
+      } catch (err) {
+        setError('Failed to load category data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [categoryId]);
 
   const handleChange = (e) => {
     setError('');
@@ -49,45 +92,42 @@ const AddCategory = () => {
     }
   };
 
-  // Load all categories on component mount
-  useEffect(() => {
-    getCategories().then((data) => {
-      if (data.error) {
-        setError(data.error);
-      } else {
-        setAllCategories(data);
-      }
-    });
-  }, []);
-
-  const clickSubmit = (e) => {
+  const clickSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess(false);
+    setLoading(true);
     
     // Validation
     if (categoryType === 'sub' && !parent) {
       setError('Please select a parent category for subcategory');
+      setLoading(false);
       return;
     }
     
-    // make request to api to create category
+    // Prepare category data
     const categoryData = { name };
     if (categoryType === 'sub' && parent) {
       categoryData.parent = parent;
+    } else if (categoryType === 'main') {
+      categoryData.parent = null;
     }
     
-    createCategory(user._id, token, categoryData).then((data) => {
+    try {
+      const data = await updateCategory(categoryId, user._id, token, categoryData);
       if (data.error) {
         setError(data.error);
       } else {
-        setError('');
         setSuccess(true);
-        setName('');
-        setParent('');
-        setCategoryType('main');
+        setTimeout(() => {
+          navigate('/admin/categories');
+        }, 2000);
       }
-    });
+    } catch (err) {
+      setError('Failed to update category');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const newCategoryForm = () => (
@@ -170,9 +210,9 @@ const AddCategory = () => {
         variant='contained'
         color='primary'
         sx={{ alignSelf: 'flex-start', px: 4 }}
-        disabled={categoryType === 'sub' && !parent}
+        disabled={!name.trim() || (categoryType === 'sub' && !parent) || loading}
       >
-        Create {categoryType === 'main' ? 'Main' : 'Sub'} Category
+        {loading ? <CircularProgress size={24} /> : `Update ${categoryType === 'main' ? 'Main' : 'Sub'} Category`}
       </Button>
     </Box>
   );
@@ -181,7 +221,7 @@ const AddCategory = () => {
     if (success) {
       return (
         <Alert severity='success' sx={{ width: '100%' }}>
-          {categoryType === 'main' ? 'Main' : 'Sub'} Category <strong>{name}</strong> has been created successfully!
+          {categoryType === 'main' ? 'Main' : 'Sub'} Category <strong>{name}</strong> has been updated successfully! Redirecting...
         </Alert>
       );
     }
@@ -191,34 +231,51 @@ const AddCategory = () => {
     if (error) {
       return (
         <Alert severity='error' sx={{ width: '100%' }}>
-          Category should be unique.
+          {error}
         </Alert>
       );
     }
   };
+
   const goBack = () => (
     <Button
       component={Link}
-      to='/admin/dashboard'
+      to='/admin/categories'
       variant='outlined'
       color='warning'
       sx={{ mt: 2 }}
     >
-      Back to Dashboard
+      Back to Categories
     </Button>
   );
+
+  if (loading && !name) {
+    return (
+      <Layout>
+        <Grid container spacing={2}>
+          <AdminSidebar />
+          <Grid size={{ xs: 12, md: 9 }}>
+            <Card elevation={3}>
+              <CardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                  <CircularProgress />
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
       <Grid container spacing={2}>
-        {/* LEFT SIDEBAR */}
         <AdminSidebar />
-  
-        {/* MAIN CONTENT */}
         <Grid size={{ xs: 12, md: 9 }}>
           <Card elevation={3}>
             <CardHeader
-              title='Add New Category'
+              title='Edit Category'
               sx={{
                 bgcolor: 'background.paper',
               }}
@@ -248,4 +305,5 @@ const AddCategory = () => {
   );
 };
 
-export default AddCategory;
+export default EditCategory;
+

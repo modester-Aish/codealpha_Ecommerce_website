@@ -100,8 +100,6 @@ export default function Signin() {
 
   return (
     <Layout
-      title='Signin page'
-      description='Signin to MERN E-commerce App'
       className='container col-md-8 offset-md-2'
     >
       <Container component='main' maxWidth='xs'>

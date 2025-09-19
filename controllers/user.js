@@ -1,16 +1,38 @@
+const mongoose = require('mongoose');
 const User = require('../models/user');
 const { Order } = require('../models/order');
 const { errorHandler } = require('../helpers/dbErrorHandler');
 
 exports.userById = async (req, res, next, id) => {
   try {
-    const user = await User.findById(id);
+    console.log('userById middleware called with ID:', id);
+    
+    // Check if mongoose is connected
+    if (mongoose.connection.readyState !== 1) {
+      console.error('Database not connected. ReadyState:', mongoose.connection.readyState);
+      return res.status(500).json({ error: 'Database connection error' });
+    }
+    
+    const user = await User.findById(id).maxTimeMS(10000); // 10 second timeout
     if (!user) {
+      console.log('User not found for ID:', id);
       return res.status(400).json({ error: 'User not found' });
     }
+    console.log('User found:', user.name, 'Role:', user.role);
     req.profile = user;
     next();
   } catch (err) {
+    console.error('Error in userById middleware:', err);
+    
+    // Handle specific error types
+    if (err.name === 'CastError') {
+      return res.status(400).json({ error: 'Invalid user ID format' });
+    } else if (err.name === 'MongooseError' && err.message.includes('buffering timed out')) {
+      return res.status(500).json({ error: 'Database connection timeout' });
+    } else if (err.name === 'MongoNetworkError') {
+      return res.status(500).json({ error: 'Database network error' });
+    }
+    
     return res.status(400).json({ error: 'User not found' });
   }
 };

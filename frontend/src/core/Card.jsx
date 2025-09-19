@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import ShowImage from './ShowImage';
 import moment from 'moment';
 
@@ -44,7 +44,8 @@ const Card = ({
     return (
       showViewProductButton && (
         <Button
-          href={`/product/${product._id}`}
+          component={Link}
+          to={`/product/${product._id}`}
           variant='contained'
           color='primary'
           sx={{ mr: 1 }}
@@ -154,11 +155,16 @@ const Card = ({
   return (
     <>
       <CardM
+        component={Link}
+        to={`/product/${product._id}`}
         sx={{
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
           transition: 'transform 0.3s',
+          textDecoration: 'none',
+          color: 'inherit',
+          cursor: 'pointer',
           '&:hover': {
             transform: 'scale(1.02)',
             boxShadow: 3,
@@ -173,17 +179,15 @@ const Card = ({
           </Typography>
 
           <Typography
-            variant='body2'
-            color='text.secondary'
+            variant='caption'
+            color='primary'
             sx={{
+              display: 'block',
               mb: 2,
-              display: '-webkit-box',
-              WebkitLineClamp: 3,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
+              fontWeight: 500,
             }}
           >
-            {product.description}
+            Click to view full details →
           </Typography>
 
           <Stack direction='row' spacing={1} sx={{ mb: 1 }}>
@@ -218,6 +222,7 @@ const Card = ({
               gap: 1,
               mt: 'auto',
             }}
+            onClick={(e) => e.stopPropagation()}
           >
             {showViewButton(showViewProductButton)}
             {showAddToCartBtn(showAddToCartButton)}

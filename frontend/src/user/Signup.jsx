@@ -88,8 +88,6 @@ export default function Signup() {
 
   return (
     <Layout
-      title='Signup page'
-      description='Signup to MERN E-commerce App'
       className='container col-md-8 offset-md-2'
     >
       <Container component='main' maxWidth='xs'>

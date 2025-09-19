@@ -1,9 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
-  InputLabel,
-  MenuItem,
-  FormControl,
-  Select,
   TextField,
   Button,
   Box,
@@ -13,37 +9,23 @@ import {
   Container,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
-import { getCategories, list } from './apiCore';
+import { list } from './apiCore';
 import Card from './Card';
 
 const Search = () => {
   const [data, setData] = useState({
-    categories: [],
-    category: '',
     search: '',
     results: [],
     searched: false,
   });
 
-  const { categories, category, search, results, searched } = data;
+  const { search, results, searched } = data;
 
-  const loadCategories = () => {
-    getCategories().then((data) => {
-      if (data.error) {
-        console.log(data.error);
-      } else {
-        setData((prevData) => ({ ...prevData, categories: data }));
-      }
-    });
-  };
-
-  useEffect(() => {
-    loadCategories();
-  }, []);
+  // Removed category loading since we don't need categories in search anymore
 
   const searchData = () => {
     if (search) {
-      list({ search: search || undefined, category: category }).then(
+      list({ search: search || undefined }).then(
         (response) => {
           if (response.error) {
             console.log(response.error);
@@ -64,10 +46,10 @@ const Search = () => {
     searchData();
   };
 
-  const handleChange = (name) => (event) => {
+  const handleChange = (event) => {
     setData((prevData) => ({
       ...prevData,
-      [name]: event.target.value,
+      search: event.target.value,
       searched: false,
     }));
   };
@@ -112,38 +94,18 @@ const Search = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          flexWrap: 'wrap',
           gap: 2,
-          maxWidth: 800,
+          maxWidth: 600,
           mx: 'auto',
           boxShadow: 3,
         }}
       >
-        <FormControl sx={{ minWidth: 180 }}>
-          <InputLabel id='category-select-label'>Category</InputLabel>
-          <Select
-            labelId='category-select-label'
-            id='category-select'
-            value={category}
-            onChange={handleChange('category')}
-            label='Category'
-            size='small'
-          >
-            <MenuItem value='All'>All Categories</MenuItem>
-            {categories.map((c, i) => (
-              <MenuItem key={i} value={c._id}>
-                {c.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-
         <TextField
           fullWidth
           variant='outlined'
           placeholder='Search products...'
           value={search}
-          onChange={handleChange('search')}
+          onChange={handleChange}
           size='small'
           InputProps={{
             startAdornment: <SearchIcon color='action' sx={{ mr: 1 }} />,

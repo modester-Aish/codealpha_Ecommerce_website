@@ -9,12 +9,20 @@ import {
   MenuItem,
   Divider,
   Alert,
+  InputAdornment,
+  Box,
+  Typography,
+  CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  FormHelperText,
 } from '@mui/material';
 import { Navigate, useParams } from 'react-router-dom';
 import Layout from '../core/Layout';
 import AdminSidebar from '../components/AdminSidebar';
 import { isAuthenticated } from '../auth';
-import { getProduct, getCategories, updateProduct } from './apiAdmin';
+import { getProduct, getMainCategories, getSubcategories, updateProduct } from './apiAdmin';
 
 const UpdateProduct = () => {
   const { productId } = useParams();
@@ -23,7 +31,12 @@ const UpdateProduct = () => {
     name: '',
     description: '',
     price: '',
+    categories: [],
     category: '',
+    subcategory: '',
+    subSubcategory: '',
+    subcategories: [],
+    subSubcategories: [],
     shipping: '',
     quantity: '',
     photo: '',
@@ -33,14 +46,28 @@ const UpdateProduct = () => {
     redirectToProfile: false,
     formData: new FormData(),
   });
-  const [categories, setCategories] = useState([]);
+  const [touched, setTouched] = useState({
+    name: false,
+    description: false,
+    price: false,
+    category: false,
+    subcategory: false,
+    subSubcategory: false,
+    shipping: false,
+    quantity: false,
+  });
 
   const { user, token } = isAuthenticated();
   const {
     name,
     description,
     price,
+    categories,
     category,
+    subcategory,
+    subSubcategory,
+    subcategories,
+    subSubcategories,
     shipping,
     quantity,
     loading,
@@ -50,21 +77,51 @@ const UpdateProduct = () => {
     formData,
   } = values;
 
+  // Form validation
+  const validate = () => {
+    return (
+      name.trim() !== '' &&
+      description.trim() !== '' &&
+      price > 0 &&
+      category !== '' &&
+      subcategory !== '' &&
+      subSubcategory !== '' &&
+      shipping !== '' &&
+      quantity > 0
+      // Photo is optional in update - can keep existing photo
+    );
+  };
+
+  const isFormValid = validate();
+
   // Load product and categories
   const init = (id) => {
     getProduct(id).then((data) => {
       if (data.error) {
         setValues((prev) => ({ ...prev, error: data.error }));
       } else {
+        // Create FormData with existing product data
+        const newFormData = new FormData();
+        newFormData.set('name', data.name);
+        newFormData.set('description', data.description);
+        newFormData.set('price', data.price);
+        newFormData.set('category', data.category?._id || '');
+        newFormData.set('subcategory', data.subcategory?._id || '');
+        newFormData.set('subSubcategory', data.subSubcategory?._id || '');
+        newFormData.set('shipping', data.shipping ? '1' : '0');
+        newFormData.set('quantity', data.quantity);
+        
         setValues((prev) => ({
           ...prev,
           name: data.name,
           description: data.description,
           price: data.price,
-          category: data.category._id,
-          shipping: data.shipping,
+          category: data.category?._id || '',
+          subcategory: data.subcategory?._id || '',
+          subSubcategory: data.subSubcategory?._id || '',
+          shipping: data.shipping ? '1' : '0',
           quantity: data.quantity,
-          formData: new FormData(),
+          formData: newFormData,
         }));
         initCategories();
       }
@@ -72,11 +129,11 @@ const UpdateProduct = () => {
   };
 
   const initCategories = () => {
-    getCategories().then((data) => {
+    getMainCategories().then((data) => {
       if (data.error) {
         setValues((prev) => ({ ...prev, error: data.error }));
       } else {
-        setCategories(data);
+        setValues((prev) => ({ ...prev, categories: data }));
       }
     });
   };
@@ -89,32 +146,130 @@ const UpdateProduct = () => {
 
   const handleChange = (name) => (event) => {
     const value = name === 'photo' ? event.target.files[0] : event.target.value;
-    formData.set(name, value);
-    setValues((prev) => ({ ...prev, [name]: value }));
+
+    // Update formData - preserve existing data and update the changed field
+    const newFormData = new FormData();
+    for (let [key, val] of formData.entries()) {
+      if (key !== name) {
+        newFormData.set(key, val);
+      }
+    }
+    if (value !== undefined && value !== null) {
+      newFormData.set(name, value);
+    }
+    
+    console.log('Form field changed:', name, 'Value:', value);
+    console.log('Updated FormData entries:');
+    for (let [key, val] of newFormData.entries()) {
+      console.log(key, ':', val);
+    }
+
+    // Handle hierarchical category selection
+    if (name === 'category') {
+      if (value) {
+        getSubcategories(value).then((data) => {
+          if (data.error) {
+            setValues((prev) => ({ ...prev, error: data.error }));
+          } else {
+            setValues((prev) => ({
+              ...prev,
+              [name]: value,
+              subcategories: data,
+              subcategory: '', // Reset subcategory when category changes
+              subSubcategory: '', // Reset sub-subcategory
+              subSubcategories: [], // Clear sub-subcategories
+              formData: newFormData,
+              error: '',
+            }));
+          }
+        }).catch((error) => {
+          setValues((prev) => ({ ...prev, error: 'Failed to load subcategories' }));
+        });
+      } else {
+        setValues((prev) => ({
+          ...prev,
+          [name]: value,
+          subcategories: [],
+          subcategory: '',
+          subSubcategory: '',
+          subSubcategories: [],
+          formData: newFormData,
+          error: '',
+        }));
+      }
+    } else if (name === 'subcategory') {
+      if (value) {
+        getSubcategories(value).then((data) => {
+          if (data.error) {
+            setValues((prev) => ({ ...prev, error: data.error }));
+          } else {
+            setValues((prev) => ({
+              ...prev,
+              [name]: value,
+              subSubcategories: data,
+              subSubcategory: '', // Reset sub-subcategory when subcategory changes
+              formData: newFormData,
+              error: '',
+            }));
+          }
+        }).catch((error) => {
+          setValues((prev) => ({ ...prev, error: 'Failed to load sub-subcategories' }));
+        });
+      } else {
+        setValues((prev) => ({
+          ...prev,
+          [name]: value,
+          subSubcategories: [],
+          subSubcategory: '',
+          formData: newFormData,
+          error: '',
+        }));
+      }
+    } else {
+      setValues((prev) => ({
+        ...prev,
+        [name]: value,
+        formData: newFormData,
+        error: '',
+      }));
+    }
+
+    // Mark field as touched
+    setTouched((prev) => ({ ...prev, [name]: true }));
+  };
+
+  const handleBlur = (field) => () => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
   };
 
   const clickSubmit = (event) => {
     event.preventDefault();
+    console.log('Update product form submitted');
+    console.log('Form data:', formData);
+    console.log('Product ID:', productId);
+    console.log('User ID:', user._id);
+    
     setValues((prev) => ({ ...prev, error: '', loading: true }));
 
     updateProduct(productId, user._id, token, formData).then((data) => {
+      console.log('Update response received:', data);
+      
       if (data.error) {
+        console.error('Update error:', data.error);
         setValues((prev) => ({ ...prev, error: data.error, loading: false }));
       } else {
-        setValues({
-          ...values,
-          name: '',
-          description: '',
-          photo: '',
-          price: '',
-          quantity: '',
+        console.log('Product updated successfully:', data.name);
+        setValues((prev) => ({
+          ...prev,
           loading: false,
           error: '',
           redirectToProfile: true,
           createdProduct: data.name,
-          formData: new FormData(),
-        });
+        }));
       }
+    }).catch((err) => {
+      console.error('Update catch error:', err);
+      setValues((prev) => ({ ...prev, error: 'Failed to update product', loading: false }));
     });
   };
 
@@ -125,10 +280,7 @@ const UpdateProduct = () => {
   };
 
   return (
-    <Layout
-      title='Update Product'
-      description={`Hi ${user.name}, update the product details below`}
-    >
+    <Layout>
       <Grid container spacing={2}>
         <AdminSidebar />
 
@@ -145,98 +297,231 @@ const UpdateProduct = () => {
                 </Alert>
               )}
 
-              <form onSubmit={clickSubmit}>
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
-                    <Button variant='outlined' component='label'>
-                      Upload Product Photo
-                      <input
-                        hidden
-                        type='file'
-                        accept='image/*'
-                        onChange={handleChange('photo')}
-                      />
-                    </Button>
-                  </Grid>
-
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      label='Name'
-                      fullWidth
-                      value={name}
-                      onChange={handleChange('name')}
+              <Box component='form' onSubmit={clickSubmit} sx={{ fullWidth: true }}>
+                <Box sx={{ mb: 3 }}>
+                  <Button
+                    variant='outlined'
+                    component='label'
+                    fullWidth
+                    color='primary'
+                  >
+                    Update Product Photo (Optional)
+                    <input
+                      type='file'
+                      name='photo'
+                      accept='image/*'
+                      onChange={handleChange('photo')}
+                      onBlur={handleBlur('photo')}
+                      hidden
                     />
-                  </Grid>
+                  </Button>
+                  <FormHelperText>
+                    Leave empty to keep current photo, or select a new image to update
+                  </FormHelperText>
+                  {formData.get('photo') && formData.get('photo') !== 'null' && (
+                    <FormHelperText sx={{ color: 'success.main' }}>
+                      ✓ New photo selected - will replace current photo
+                    </FormHelperText>
+                  )}
+                </Box>
 
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      label='Price'
-                      type='number'
-                      fullWidth
-                      value={price}
-                      onChange={handleChange('price')}
-                    />
-                  </Grid>
+                <TextField
+                  label='Product Name'
+                  variant='outlined'
+                  fullWidth
+                  margin='normal'
+                  value={name}
+                  onChange={handleChange('name')}
+                  onBlur={handleBlur('name')}
+                  error={touched.name && name.trim() === ''}
+                  helperText={
+                    touched.name && name.trim() === '' ? 'Product name is required' : ''
+                  }
+                  required
+                />
 
-                  <Grid item xs={12}>
-                    <TextField
-                      label='Description'
-                      multiline
-                      rows={3}
-                      fullWidth
-                      value={description}
-                      onChange={handleChange('description')}
-                    />
-                  </Grid>
+                <TextField
+                  label='Description'
+                  variant='outlined'
+                  fullWidth
+                  margin='normal'
+                  multiline
+                  rows={4}
+                  value={description}
+                  onChange={handleChange('description')}
+                  onBlur={handleBlur('description')}
+                  error={touched.description && description.trim() === ''}
+                  helperText={
+                    touched.description && description.trim() === ''
+                      ? 'Description is required'
+                      : ''
+                  }
+                  required
+                />
 
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      select
-                      label='Category'
-                      fullWidth
-                      value={category}
-                      onChange={handleChange('category')}
-                    >
-                      <MenuItem value=''>Select Category</MenuItem>
-                      {categories.map((c) => (
+                <TextField
+                  label='Price ($)'
+                  variant='outlined'
+                  fullWidth
+                  margin='normal'
+                  type='number'
+                  value={price}
+                  onChange={handleChange('price')}
+                  onBlur={handleBlur('price')}
+                  error={touched.price && (price === '' || price <= 0)}
+                  helperText={
+                    touched.price && (price === '' || price <= 0)
+                      ? 'Price must be greater than 0'
+                      : 'Enter price in dollars'
+                  }
+                  required
+                  inputProps={{ min: 0, step: 0.01 }}
+                  InputProps={{
+                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                  }}
+                />
+
+                {/* Main Category Selection */}
+                <FormControl
+                  fullWidth
+                  margin='normal'
+                  error={touched.category && category === ''}
+                >
+                  <InputLabel id='category-label'>Main Category *</InputLabel>
+                  <Select
+                    labelId='category-label'
+                    value={category}
+                    label='Main Category *'
+                    onChange={handleChange('category')}
+                    onBlur={handleBlur('category')}
+                  >
+                    <MenuItem value=''>
+                      <em>Select a main category</em>
+                    </MenuItem>
+                    {categories.length === 0 ? (
+                      <MenuItem disabled>
+                        <em>No categories available</em>
+                      </MenuItem>
+                    ) : (
+                      categories.map((c) => (
                         <MenuItem key={c._id} value={c._id}>
                           {c.name}
                         </MenuItem>
-                      ))}
-                    </TextField>
-                  </Grid>
+                      ))
+                    )}
+                  </Select>
+                  {touched.category && category === '' && (
+                    <FormHelperText>Main category is required</FormHelperText>
+                  )}
+                </FormControl>
 
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      select
-                      label='Shipping'
-                      fullWidth
-                      value={shipping}
-                      onChange={handleChange('shipping')}
+                {/* Subcategory Selection */}
+                {subcategories.length > 0 && (
+                  <FormControl fullWidth margin='normal' error={touched.subcategory && subcategory === ''}>
+                    <InputLabel id='subcategory-label'>Subcategory *</InputLabel>
+                    <Select
+                      labelId='subcategory-label'
+                      value={subcategory}
+                      label='Subcategory *'
+                      onChange={handleChange('subcategory')}
+                      onBlur={handleBlur('subcategory')}
                     >
-                      <MenuItem value=''>Select</MenuItem>
-                      <MenuItem value='0'>No</MenuItem>
-                      <MenuItem value='1'>Yes</MenuItem>
-                    </TextField>
-                  </Grid>
+                      <MenuItem value=''>
+                        <em>Select a subcategory</em>
+                      </MenuItem>
+                      {subcategories.map((sub) => (
+                        <MenuItem key={sub._id} value={sub._id}>
+                          {sub.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    {touched.subcategory && subcategory === '' && (
+                      <FormHelperText>Subcategory is required</FormHelperText>
+                    )}
+                  </FormControl>
+                )}
 
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      label='Quantity'
-                      type='number'
-                      fullWidth
-                      value={quantity}
-                      onChange={handleChange('quantity')}
-                    />
-                  </Grid>
+                {/* Sub-Subcategory Selection */}
+                {subSubcategories.length > 0 && (
+                  <FormControl fullWidth margin='normal' error={touched.subSubcategory && subSubcategory === ''}>
+                    <InputLabel id='sub-subcategory-label'>Sub-Subcategory *</InputLabel>
+                    <Select
+                      labelId='sub-subcategory-label'
+                      value={subSubcategory}
+                      label='Sub-Subcategory *'
+                      onChange={handleChange('subSubcategory')}
+                      onBlur={handleBlur('subSubcategory')}
+                    >
+                      <MenuItem value=''>
+                        <em>Select a sub-subcategory</em>
+                      </MenuItem>
+                      {subSubcategories.map((subSub) => (
+                        <MenuItem key={subSub._id} value={subSub._id}>
+                          {subSub.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    {touched.subSubcategory && subSubcategory === '' && (
+                      <FormHelperText>Sub-subcategory is required</FormHelperText>
+                    )}
+                  </FormControl>
+                )}
 
-                  <Grid item xs={12}>
-                    <Button type='submit' variant='contained' color='primary'>
-                      Update Product
-                    </Button>
-                  </Grid>
-                </Grid>
-              </form>
+                <FormControl
+                  fullWidth
+                  margin='normal'
+                  error={touched.shipping && shipping === ''}
+                >
+                  <InputLabel id='shipping-label'>Shipping *</InputLabel>
+                  <Select
+                    labelId='shipping-label'
+                    value={shipping}
+                    label='Shipping *'
+                    onChange={handleChange('shipping')}
+                    onBlur={handleBlur('shipping')}
+                  >
+                    <MenuItem value=''>
+                      <em>Select shipping option</em>
+                    </MenuItem>
+                    <MenuItem value='0'>No</MenuItem>
+                    <MenuItem value='1'>Yes</MenuItem>
+                  </Select>
+                  {touched.shipping && shipping === '' && (
+                    <FormHelperText>Shipping option is required</FormHelperText>
+                  )}
+                </FormControl>
+
+                <TextField
+                  label='Quantity'
+                  variant='outlined'
+                  fullWidth
+                  margin='normal'
+                  type='number'
+                  value={quantity}
+                  onChange={handleChange('quantity')}
+                  onBlur={handleBlur('quantity')}
+                  error={touched.quantity && (quantity === '' || quantity <= 0)}
+                  helperText={
+                    touched.quantity && (quantity === '' || quantity <= 0)
+                      ? 'Quantity must be greater than 0'
+                      : ''
+                  }
+                  required
+                  inputProps={{ min: 0 }}
+                />
+
+                <Button
+                  type='submit'
+                  variant='contained'
+                  color='primary'
+                  fullWidth
+                  size='large'
+                  sx={{ mt: 3 }}
+                  disabled={!isFormValid || loading}
+                >
+                  {loading ? <CircularProgress size={24} /> : 'Update Product'}
+                </Button>
+              </Box>
 
             </CardContent>
           </Card>

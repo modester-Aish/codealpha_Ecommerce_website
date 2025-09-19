@@ -75,20 +75,35 @@ exports.requireSignin = expressjwt({
 });
 
 exports.isAuth = (req, res, next) => {
+  console.log('isAuth middleware called');
+  console.log('req.profile exists:', !!req.profile);
+  console.log('req.auth exists:', !!req.auth);
+  if (req.profile && req.auth) {
+    console.log('req.profile._id:', req.profile._id);
+    console.log('req.auth._id:', req.auth._id);
+    console.log('IDs match:', req.profile._id.toString() === req.auth._id.toString());
+  }
+  
   let user = req.profile && req.auth && req.profile._id == req.auth._id;
   if (!user) {
+    console.log('isAuth failed - access denied');
     return res.status(403).json({
       error: 'Access denied',
     });
   }
+  console.log('isAuth passed');
   next();
 };
 
 exports.isAdmin = (req, res, next) => {
+  console.log('isAdmin middleware called');
+  console.log('req.profile.role:', req.profile.role);
   if (req.profile.role === 0) {
+    console.log('isAdmin failed - user is not admin (role = 0)');
     return res.status(403).json({
       error: 'Admin resource! Access denied',
     });
   }
+  console.log('isAdmin passed - user is admin');
   next();
 };

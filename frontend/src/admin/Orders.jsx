@@ -76,10 +76,7 @@ const Orders = () => {
     );
 
   return (
-    <Layout
-      title='Orders'
-      description={`Hey ${user.name}, you can manage all the orders here`}
-    >
+    <Layout>
       <Grid container spacing={2}>
         {/* LEFT SIDEBAR */}
         <AdminSidebar />
@@ -128,17 +125,40 @@ const Orders = () => {
                           <strong>Amount:</strong> ${o.amount}
                         </Typography>
                         <Typography variant='body1'>
+                          <strong>Payment Method:</strong> {o.paymentMethod || 'Cash on Delivery'}
+                        </Typography>
+                        <Typography variant='body1'>
                           <strong>Ordered by:</strong> {o.user.name}
                         </Typography>
-                      </Grid>
-                      <Grid item xs={12} sm={6}>
                         <Typography variant='body1'>
                           <strong>Ordered on:</strong>{' '}
                           {moment(o.createdAt).fromNow()}
                         </Typography>
-                        <Typography variant='body1'>
-                          <strong>Delivery address:</strong> {o.address}
-                        </Typography>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        {o.deliveryDetails ? (
+                          <Box>
+                            <Typography variant='subtitle2' sx={{ fontWeight: 'bold', mb: 1 }}>
+                              Delivery Information:
+                            </Typography>
+                            <Typography variant='body2'>
+                              <strong>Name:</strong> {o.deliveryDetails.name}
+                            </Typography>
+                            <Typography variant='body2'>
+                              <strong>Email:</strong> {o.deliveryDetails.email}
+                            </Typography>
+                            <Typography variant='body2'>
+                              <strong>Phone:</strong> {o.deliveryDetails.phone}
+                            </Typography>
+                            <Typography variant='body2'>
+                              <strong>Address:</strong> {o.deliveryDetails.address}
+                            </Typography>
+                          </Box>
+                        ) : (
+                          <Typography variant='body1'>
+                            <strong>Delivery address:</strong> {o.address || 'No address provided'}
+                          </Typography>
+                        )}
                       </Grid>
                     </Grid>
 

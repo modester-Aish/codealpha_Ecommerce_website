@@ -21,6 +21,16 @@ export const getCategories = () => {
     .catch((err) => console.log(err));
 };
 
+export const getMainCategories = () => {
+  return fetch(`${API}/categories/main`, {
+    method: 'GET',
+  })
+    .then((response) => {
+      return response.json();
+    })
+    .catch((err) => console.log(err));
+};
+
 export const getFilteredProducts = (skip, limit, filters = {}) => {
   const data = {
     limit,
