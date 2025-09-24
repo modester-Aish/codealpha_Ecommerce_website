@@ -5,6 +5,15 @@
 > **Database:** MongoDB
 > **Payment:** Braintree Integration
 
+<br>
+
+<img src="./frontend/public/hero.png" alt="Hero Section">
+<img src="./frontend/public/home.png" alt="Home Page">
+<img src="./frontend/public/dashboard.png" alt="Admin Dashboard">
+<img src="./frontend/public/userdashboard.png" alt="User Dashboard">
+<img src="./frontend/public/vieworder.png" alt="Order View">
+
+
 ## 🚀 Features Overview
 
 ### 🛍️ **User Features**
