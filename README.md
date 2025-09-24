@@ -348,9 +348,7 @@ npm start
 - Write comprehensive tests
 - Document new features
 
-## 📄 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 🆘 Support
 
